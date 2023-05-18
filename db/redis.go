@@ -4,10 +4,10 @@ import (
 	"github.com/go-redis/redis"
 )
 
-var client *redis.Client
+var rds *redis.Client
 
 func InitRedis() {
-	client = redis.NewClient(&redis.Options{
+	rds = redis.NewClient(&redis.Options{
 		Addr:     "",
 		Password: "",
 		DB:       0,
@@ -15,5 +15,5 @@ func InitRedis() {
 }
 
 func GetRedis() *redis.Client {
-	return client
+	return rds
 }

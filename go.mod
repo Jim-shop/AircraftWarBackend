@@ -6,8 +6,11 @@ require github.com/gin-gonic/gin v1.9.0
 
 require (
 	github.com/go-sql-driver/mysql v1.7.0 // indirect
+	github.com/google/go-cmp v0.5.9 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
+	github.com/onsi/ginkgo v1.16.5 // indirect
+	github.com/onsi/gomega v1.27.6 // indirect
 )
 
 require (
