@@ -1,1 +1,3 @@
-# AircraftWarBackend
+# 飞机大战（服务端）
+
+深专的 OOP 实践。基于 Go + Gin。
