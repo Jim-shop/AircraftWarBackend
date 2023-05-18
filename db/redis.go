@@ -17,3 +17,4 @@ func InitRedis() {
 func GetRedis() *redis.Client {
 	return rds
 }
+//todo

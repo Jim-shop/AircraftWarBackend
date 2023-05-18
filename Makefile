@@ -28,4 +28,5 @@ build:
 	go build -o $(BUILD_DIR)/$(BINARY_NAME) $(SOURCE_DIR)
 
 deploy:
-	scp $(BUILD_DIR)/$(BINARY_NAME) $(REMOTE_ACCOUNT_IP):$(SERVER_DIR)/$(BINARY_NAME)
+	scp -r $(BUILD_DIR) $(REMOTE_ACCOUNT_IP):$(SERVER_DIR)/
+	scp -r ./conf/ $(REMOTE_ACCOUNT_IP):$(SERVER_DIR)/
