@@ -25,3 +25,14 @@ func SaveScore(score *Score) error {
 	result := db.GetSql().Table("scores").Create(score)
 	return result.Error
 }
+
+func GetScore(id int) (*Score, error) {
+	score := &Score{}
+	result := db.GetSql().Table("scores").First(score, id)
+	return score, result.Error
+}
+
+func DeleteScore(score *Score) error {
+	result := db.GetSql().Table("scores").Delete(score)
+	return result.Error
+}
