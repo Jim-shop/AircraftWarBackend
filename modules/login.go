@@ -15,20 +15,24 @@ type LoginRequest struct {
 
 // 核验身份并签发token
 func Login(c *gin.Context) {
+	// 检查提交的信息
 	request := LoginRequest{}
 	if err := c.Bind(&request); err != nil {
 		c.Status(http.StatusBadRequest)
 		return
 	}
+	// 检查用户是否存在
 	user, err := models.QueryUser(request.User)
 	if err != nil {
 		c.Status(http.StatusBadRequest)
 		return
 	}
+	// 检查密码是否正确
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(request.Password)); err != nil {
 		c.Status(http.StatusBadRequest)
 		return
 	}
+	// 签发新Token
 	token := models.NewToken(user)
 	c.String(http.StatusOK, token.Token)
 }
