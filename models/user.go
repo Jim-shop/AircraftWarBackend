@@ -8,8 +8,8 @@ import (
 
 type User struct {
 	gorm.Model
-	Name     string `gorm:"not null"`
-	Password []byte `gorm:"not null"`
+	Name     string `gorm:"not null;size: 256"`
+	Password []byte `gorm:"not null;size: 256"`
 }
 
 func QueryUser(name string) (*User, error) {

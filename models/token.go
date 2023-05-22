@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"imshit/aircraftwar/db"
 	"math/big"
+	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -31,8 +32,8 @@ func NewToken(user *User, c *gin.Context) (*Token, error) {
 		sha512.Sum512([]byte(info)),
 	)
 	db.GetRedis().Set(
-		token, 
-		user.ID, 
+		token,
+		user.ID,
 		viper.GetDuration("token.timeout"),
 	)
 	return &Token{token}, nil
@@ -45,9 +46,18 @@ func ValidateToken(token *Token) bool {
 	if err != nil {
 		return false
 	}
+	// 延期Token
 	success, err := redis.Expire(token.Token, viper.GetDuration("token.timeout")).Result()
 	if err != nil {
 		return false
 	}
 	return success
+}
+
+func GetUserIDByToken(token *Token) (int, error) {
+	_id, err := db.GetRedis().Get(token.Token).Result()
+	if err != nil {
+		return 0, err
+	}
+	return strconv.Atoi(_id)
 }
