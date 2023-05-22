@@ -28,7 +28,7 @@ func Login(c *gin.Context) {
 		return
 	}
 	// 检查密码是否正确
-	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(request.Password)); err != nil {
+	if err := bcrypt.CompareHashAndPassword(user.Password, []byte(request.Password)); err != nil {
 		c.Status(http.StatusBadRequest)
 		return
 	}

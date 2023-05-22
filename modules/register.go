@@ -4,6 +4,7 @@ import (
 	"imshit/aircraftwar/models"
 	"net/http"
 
+	"golang.org/x/crypto/bcrypt"
 	"github.com/gin-gonic/gin"
 )
 
@@ -30,10 +31,16 @@ func Register(c *gin.Context) {
 		c.Status(http.StatusBadRequest)
 		return
 	}
+	// 加密存储密码
+	crypt, err := bcrypt.GenerateFromPassword([]byte(request.Password), bcrypt.DefaultCost)
+	if err != nil {
+		c.Status(http.StatusBadRequest)
+		return
+	}
 	// 添加新用户
 	if err := models.CreateUser(&models.User{
 		Name:     request.User,
-		Password: request.Password,
+		Password: crypt,
 	}); err != nil {
 		c.Status(http.StatusBadRequest)
 		return
