@@ -22,12 +22,12 @@ func Register(c *gin.Context) {
 		return
 	}
 	// 添加新用户
-	if err := models.AddUser(&models.User{
-		Name: request.User,
+	if err := models.CreateUser(&models.User{
+		Name:     request.User,
 		Password: request.Password,
 	}); err != nil {
 		c.Status(http.StatusBadRequest)
-		return 
+		return
 	}
 	// 返回成功标志
 	c.Status(http.StatusOK)

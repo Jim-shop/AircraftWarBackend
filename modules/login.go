@@ -33,6 +33,10 @@ func Login(c *gin.Context) {
 		return
 	}
 	// 签发新Token
-	token := models.NewToken(user)
+	token, err := models.NewToken(user, c)
+	if err != nil {
+		c.Status(http.StatusBadRequest)
+		return 
+	}
 	c.String(http.StatusOK, token.Token)
 }
