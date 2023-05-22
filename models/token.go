@@ -5,6 +5,7 @@ import (
 	"crypto/sha512"
 	"fmt"
 	"imshit/aircraftwar/db"
+	"log"
 	"math/big"
 	"strconv"
 	"time"
@@ -20,6 +21,7 @@ type Token struct {
 func NewToken(user *User, c *gin.Context) (*Token, error) {
 	randInt, err := rand.Int(rand.Reader, big.NewInt((1<<63)-1))
 	if err != nil {
+		log.Printf("Rand int generate error: %v\n", err)
 		return nil, err
 	}
 	info := fmt.Sprintf("%s%s%s%s",
@@ -49,6 +51,7 @@ func ValidateToken(token *Token) bool {
 	// 延期Token
 	success, err := redis.Expire(token.Token, viper.GetDuration("token.timeout")).Result()
 	if err != nil {
+		log.Printf("Token expire error: %v\n", err)
 		return false
 	}
 	return success

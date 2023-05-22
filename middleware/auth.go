@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"imshit/aircraftwar/models"
 	"io"
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -20,6 +21,7 @@ func AuthMiddleWare() gin.HandlerFunc {
 			// 如果读body，则拷贝一份
 			body, err := c.GetRawData()
 			if err != nil {
+				log.Printf("Middleware get raw data error: %v\n", err)
 				c.AbortWithStatus(http.StatusBadRequest)
 				return
 			}

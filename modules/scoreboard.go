@@ -58,30 +58,25 @@ func AddScoreboard(c *gin.Context) {
 	// 检验请求
 	request := &AddScoreboardRequest{}
 	if err := c.ShouldBind(request); err != nil {
-		log.Println("bind")
-		log.Println(err)
 		c.Status(http.StatusBadRequest)
 		return
 	}
 	if request.Score < 0 {
-		log.Println("score")
 		c.Status(http.StatusBadRequest)
 		return
 	}
 	if request.Mode != "easy" && request.Mode != "medium" && request.Mode != "hard" {
-		log.Println("mode")
 		c.Status(http.StatusBadRequest)
 		return
 	}
 	if request.Time.After(time.Now()) {
-		log.Println("time")
 		c.Status(http.StatusBadRequest)
 		return
 	}
 	// 获取用户ID
 	user_id, err := models.GetUserIDByToken(&request.Token)
 	if err != nil {
-		log.Println("id")
+		log.Printf("Get user id error: %v\n", err)
 		c.Status(http.StatusBadRequest)
 		return
 	}
@@ -94,7 +89,7 @@ func AddScoreboard(c *gin.Context) {
 	}
 	// 增加
 	if err := models.SaveScore(score); err != nil {
-		log.Println("incre")
+		log.Printf("Score saving error: %v\n", err)
 		c.Status(http.StatusBadRequest)
 		return
 	}

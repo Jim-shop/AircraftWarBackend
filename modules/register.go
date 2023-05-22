@@ -2,10 +2,11 @@ package modules
 
 import (
 	"imshit/aircraftwar/models"
+	"log"
 	"net/http"
 
-	"golang.org/x/crypto/bcrypt"
 	"github.com/gin-gonic/gin"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type RegisterRequest LoginRequest
@@ -34,6 +35,7 @@ func Register(c *gin.Context) {
 	// 加密存储密码
 	crypt, err := bcrypt.GenerateFromPassword([]byte(request.Password), bcrypt.DefaultCost)
 	if err != nil {
+		log.Printf("Bcrypt error: %v\n", err)
 		c.Status(http.StatusBadRequest)
 		return
 	}
@@ -42,6 +44,7 @@ func Register(c *gin.Context) {
 		Name:     request.User,
 		Password: crypt,
 	}); err != nil {
+		log.Printf("Create user error: %v\n", err)
 		c.Status(http.StatusBadRequest)
 		return
 	}

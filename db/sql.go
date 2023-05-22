@@ -2,6 +2,7 @@ package db
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/spf13/viper"
 	"gorm.io/driver/mysql"
@@ -21,7 +22,7 @@ func InitSql() {
 	)
 	_db, err := gorm.Open(mysql.Open(dsn))
 	if err != nil {
-		panic(err)
+		log.Fatalf("SQL init error: %v\n", err)
 	}
 	sql = _db
 }

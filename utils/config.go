@@ -11,6 +11,6 @@ func LoadConfig() {
 	viper.SetConfigType("json")
 	viper.AddConfigPath("conf/")
 	if err := viper.ReadInConfig(); err != nil {
-		log.Printf("Viper load error: %v", err)
+		log.Printf("Viper load error: %v\n", err)
 	}
 }

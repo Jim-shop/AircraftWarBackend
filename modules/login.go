@@ -2,6 +2,7 @@ package modules
 
 import (
 	"imshit/aircraftwar/models"
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -35,6 +36,7 @@ func Login(c *gin.Context) {
 	// 签发新Token
 	token, err := models.NewToken(user, c)
 	if err != nil {
+		log.Printf("Token generate error: %v\n", err)
 		c.Status(http.StatusBadRequest)
 		return 
 	}
