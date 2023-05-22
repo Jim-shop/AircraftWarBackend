@@ -1,7 +1,7 @@
 package modules
 
 import (
-	"imshit/aircraftwar/common"
+	"imshit/aircraftwar/models"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -19,7 +19,16 @@ func Login(c *gin.Context) {
 		c.Status(http.StatusBadRequest)
 		return
 	}
-	//todo
-	token := common.NewToken(request.User)
-	c.String(http.StatusOK, token)
+	user, err := models.QueryUser(request.User); 
+	if err != nil {
+		c.Status(http.StatusBadRequest)
+		return
+	}
+	//TODO 核验密码 bcrypt？
+	if request.Password != user.Password {
+		c.Status(http.StatusBadRequest)
+		return
+	}
+	token := models.NewToken(user)
+	c.String(http.StatusOK, token.Token)
 }

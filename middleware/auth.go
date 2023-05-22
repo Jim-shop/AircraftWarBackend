@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	"imshit/aircraftwar/common"
+	"imshit/aircraftwar/models"
 	"log"
 	"net/http"
 
@@ -11,7 +11,7 @@ import (
 func AuthMiddleWare() gin.HandlerFunc {
 	// 检查用户登录态
 	return func(c *gin.Context) {
-		token := common.Token{}
+		token := models.Token{}
 		if err := c.ShouldBind(&token); err != nil {
 			log.Println(err)
 			c.AbortWithStatus(http.StatusBadRequest)

@@ -1,4 +1,5 @@
-REMOTE_ACCOUNT_IP := invalid2@haxiaoshen.top
+# REMOTE_ACCOUNT_IP := invalid2@haxiaoshen.top
+REMOTE_ACCOUNT_IP := invalid2@10.249.11.47
 SOURCE_DIR        := .
 BUILD_DIR         := ./out
 BINARY_NAME       := aircraftwar-server
@@ -28,5 +29,5 @@ build:
 	go build -o $(BUILD_DIR)/$(BINARY_NAME) $(SOURCE_DIR)
 
 deploy:
-	scp -r $(BUILD_DIR) $(REMOTE_ACCOUNT_IP):$(SERVER_DIR)/
-	scp -r ./conf/ $(REMOTE_ACCOUNT_IP):$(SERVER_DIR)/
+	scp $(BUILD_DIR)/* $(REMOTE_ACCOUNT_IP):$(SERVER_DIR)
+	scp ./conf/* $(REMOTE_ACCOUNT_IP):$(SERVER_DIR)
