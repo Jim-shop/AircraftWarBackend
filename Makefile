@@ -30,4 +30,4 @@ build:
 
 deploy:
 	scp $(BUILD_DIR)/* $(REMOTE_ACCOUNT_IP):$(SERVER_DIR)
-	scp ./conf/* $(REMOTE_ACCOUNT_IP):$(SERVER_DIR)
+	scp ./conf/* $(REMOTE_ACCOUNT_IP):$(SERVER_DIR)/conf/

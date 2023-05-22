@@ -9,7 +9,7 @@ import (
 func LoadConfig() {
 	viper.SetConfigName("config")
 	viper.SetConfigType("json")
-	viper.AddConfigPath(".conf/")
+	viper.AddConfigPath("conf/")
 	if err := viper.ReadInConfig(); err != nil {
 		log.Printf("Viper load error: %v", err)
 	}
