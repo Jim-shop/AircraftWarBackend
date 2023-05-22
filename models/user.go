@@ -14,13 +14,11 @@ type User struct {
 
 func QueryUser(name string) (*User, error) {
 	user := &User{}
-	db.GetSql().Table("users").Where("name", name).First(user)
-
-	// TODO
-	return user, nil
+	result := db.GetSql().Table("users").Where("name = ?", name).First(user)
+	return user, result.Error
 }
 
 func CreateUser(user *User) error {
-	db.GetSql().Table("users").Create(user)
-	return nil
+	result := db.GetSql().Table("users").Create(user)
+	return result.Error
 }

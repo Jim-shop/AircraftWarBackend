@@ -29,5 +29,3 @@ func InitSql() {
 func GetSql() *gorm.DB {
 	return sql
 }
-
-//todo
