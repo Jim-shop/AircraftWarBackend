@@ -1,0 +1,18 @@
+{
+    "mysql": {
+        "username": "war",
+        "password": "war",
+        "host": "localhost",
+        "port": 3306,
+        "dbname": "aircraftwar",
+        "timeout": "10s"
+    },
+    "redis": {
+        "addr": "localhost:6379",
+        "password": "",
+        "db": 0
+    },
+    "token": {
+        "timeout": "24h"
+    }
+}
