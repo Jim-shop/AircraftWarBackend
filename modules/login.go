@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type LoginRequest struct {
@@ -19,13 +20,12 @@ func Login(c *gin.Context) {
 		c.Status(http.StatusBadRequest)
 		return
 	}
-	user, err := models.QueryUser(request.User); 
+	user, err := models.QueryUser(request.User)
 	if err != nil {
 		c.Status(http.StatusBadRequest)
 		return
 	}
-	//TODO 核验密码 bcrypt？
-	if request.Password != user.Password {
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(request.Password)); err != nil {
 		c.Status(http.StatusBadRequest)
 		return
 	}
