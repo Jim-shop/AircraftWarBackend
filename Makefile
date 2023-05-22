@@ -3,7 +3,7 @@ REMOTE_ACCOUNT_IP := invalid2@10.249.11.47
 SOURCE_DIR        := .
 BUILD_DIR         := ./out
 BINARY_NAME       := aircraftwar-server
-SERVER_DIR        := ~/Desktop
+SERVER_DIR        := ~/Desktop/server
 
 export CGO_ENABLED := 0
 export GOOS        := linux
