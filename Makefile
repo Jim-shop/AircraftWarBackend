@@ -1,5 +1,5 @@
 # REMOTE_ACCOUNT_IP := invalid2@haxiaoshen.top
-REMOTE_ACCOUNT_IP := invalid2@10.249.11.47
+REMOTE_ACCOUNT_IP := invalid2@10.249.15.178
 SOURCE_DIR        := .
 BUILD_DIR         := ./out
 BINARY_NAME       := aircraftwar-server
@@ -13,7 +13,7 @@ export GOARCH      := amd64
 
 .DEFAULT: pipeline
 
-pipeline: format check test build
+pipeline: format check test build deploy
 
 format:
 	go mod tidy

@@ -23,7 +23,7 @@ func Register(c *gin.Context) {
 		c.Status(http.StatusBadRequest)
 		return
 	}
-	if size := len(request.Password); size <= 0 && size >= 16 {
+	if size := len(request.Password); size != 64 {
 		c.Status(http.StatusBadRequest)
 		return
 	}
@@ -48,6 +48,19 @@ func Register(c *gin.Context) {
 		c.Status(http.StatusBadRequest)
 		return
 	}
-	// 返回成功标志
-	c.Status(http.StatusOK)
+	// 获取用户
+	user, err := models.QueryUser(request.User)
+	if err != nil {
+		log.Printf("Query user error: %v\n", err)
+		c.Status(http.StatusBadRequest)
+		return
+	}
+	// 签发Token
+	token, err := models.NewToken(user, c)
+	if err != nil {
+		log.Printf("Token generate error: %v\n", err)
+		c.Status(http.StatusBadRequest)
+		return
+	}
+	c.String(http.StatusOK, token.Token)
 }

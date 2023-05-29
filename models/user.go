@@ -18,6 +18,12 @@ func QueryUser(name string) (*User, error) {
 	return user, result.Error
 }
 
+func GetUser(id int) (*User, error) {
+	user := &User{}
+	result := db.GetSql().Table("users").First(user)
+	return user, result.Error
+}
+
 func CreateUser(user *User) error {
 	result := db.GetSql().Table("users").Create(user)
 	return result.Error

@@ -46,14 +46,16 @@ func GetScoreboard(c *gin.Context) {
 	// 格式化
 	formatted := []map[string]interface{}{}
 	for index, info := range scores {
-		formatted = append(formatted, map[string]interface{}{
-			"rank":    index,
-			"score_id": info.ID,
-			"user_id": info.UserID,
-			"score":   info.Score,
-			"mode":    info.Mode,
-			"time":    info.Time,
-		})
+		if user, err := models.GetUser(info.UserID); err == nil {
+			formatted = append(formatted, map[string]interface{}{
+				"id":    info.ID,
+				"rank":  index,
+				"user":  user.Name,
+				"score": info.Score,
+				"mode":  info.Mode,
+				"time":  info.Time,
+			})
+		}
 	}
 	// 返回
 	c.JSON(http.StatusOK, formatted)
@@ -111,7 +113,7 @@ func DeleteScoreboard(c *gin.Context) {
 		c.Status(http.StatusBadRequest)
 		return
 	}
-	score_id, err := strconv.ParseInt(c.Param("id"), 10, 32) 
+	score_id, err := strconv.ParseInt(c.Param("id"), 10, 32)
 	if err != nil {
 		log.Println("parseint")
 		c.Status(http.StatusBadRequest)
