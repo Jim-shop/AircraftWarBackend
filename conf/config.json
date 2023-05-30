@@ -16,9 +16,15 @@
         "timeout": "24h"
     },
     "socket": {
+        "readBufferSize": 1024,
+        "writeBufferSize": 1024,
         "maxMessageSize": 1024,
         "pongWait": "60s",
         "pingPeriod": "45s",
-        "writeWait": "10s"
+        "writeWait": "10s",
+        "onlinePushInterval": "2s",
+        "checkDeadInterval": "10s",
+        "cleanRoomInterval": "60s",
+        "maxRoomNum": 1024
     }
 }

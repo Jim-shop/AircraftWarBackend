@@ -19,9 +19,10 @@ func SetupServer() (r *gin.Engine) {
 	{
 		register.POST("", modules.Register)
 	}
-	gaming := r.Group("gaming", middleware.AuthMiddleWare())
+	game := r.Group("game", middleware.AuthMiddleWare())
 	{
-		gaming.GET("", modules.Socket)
+		game.GET("pairing", modules.Pairing)
+		game.GET("fighting", modules.Fighting)
 	}
 	scoreboard := r.Group("scoreboard", middleware.AuthMiddleWare())
 	{
