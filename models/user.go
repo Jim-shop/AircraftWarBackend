@@ -20,7 +20,7 @@ func QueryUser(name string) (*User, error) {
 
 func GetUser(id int) (*User, error) {
 	user := &User{}
-	result := db.GetSql().Table("users").First(user)
+	result := db.GetSql().Table("users").Where("ID = ?", id).First(user)
 	return user, result.Error
 }
 

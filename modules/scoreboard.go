@@ -109,18 +109,15 @@ func DeleteScoreboard(c *gin.Context) {
 	// 检验请求
 	request := &DeleteScoreboardRequest{}
 	if err := c.ShouldBind(request); err != nil {
-		log.Println("bind")
 		c.Status(http.StatusBadRequest)
 		return
 	}
 	score_id, err := strconv.ParseInt(c.Param("id"), 10, 32)
 	if err != nil {
-		log.Println("parseint")
 		c.Status(http.StatusBadRequest)
 		return
 	}
 	if score_id < 0 {
-		log.Println("id<0")
 		c.Status(http.StatusBadRequest)
 		return
 	}
@@ -134,13 +131,11 @@ func DeleteScoreboard(c *gin.Context) {
 	// 获取记录
 	score, err := models.GetScore(int(score_id))
 	if err != nil {
-		log.Println("norecord")
 		c.Status(http.StatusBadRequest)
 		return
 	}
 	// 核验记录是否是用户产生的
 	if score.UserID != user_id {
-		log.Println("notuser")
 		c.Status(http.StatusBadRequest)
 		return
 	}

@@ -14,5 +14,11 @@
     },
     "token": {
         "timeout": "24h"
+    },
+    "socket": {
+        "maxMessageSize": 1024,
+        "pongWait": "60s",
+        "pingPeriod": "45s",
+        "writeWait": "10s"
     }
 }

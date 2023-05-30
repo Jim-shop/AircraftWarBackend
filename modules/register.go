@@ -19,7 +19,7 @@ func Register(c *gin.Context) {
 		return
 	}
 	// 核验是否符合要求
-	if size := len(request.User); size <= 0 && size >= 16 {
+	if size := len(request.User); size < 2 && size > 16 {
 		c.Status(http.StatusBadRequest)
 		return
 	}
