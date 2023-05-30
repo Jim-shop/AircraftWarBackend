@@ -22,7 +22,7 @@ func SetupServer() (r *gin.Engine) {
 	game := r.Group("game", middleware.AuthMiddleWare())
 	{
 		game.GET("pairing", modules.Pairing)
-		game.GET("fighting", modules.Fighting)
+		game.GET("fighting/:id", modules.Fighting)
 	}
 	scoreboard := r.Group("scoreboard", middleware.AuthMiddleWare())
 	{

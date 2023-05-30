@@ -3,9 +3,6 @@ package daemon
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
-	"imshit/aircraftwar/models"
-
 	"log"
 	"time"
 
@@ -29,7 +26,6 @@ type FightingDaemon struct {
 	rooms   map[int]*Room
 	request chan *acquireRoomRequest
 	connect chan *fightingHandler
-	// TODO
 }
 
 var fightingDaemon *FightingDaemon = nil
@@ -40,7 +36,6 @@ func GetFightingDaemon() *FightingDaemon {
 			rooms:   make(map[int]*Room),
 			request: make(chan *acquireRoomRequest, 16),
 			connect: make(chan *fightingHandler, 16),
-			// TODO
 		}
 	}
 	return fightingDaemon
@@ -51,16 +46,27 @@ func (d *FightingDaemon) acquire(request *acquireRoomRequest) {
 	for i := 0; i < viper.GetInt("socket.maxRoomNum"); i++ {
 		_, ok := d.rooms[i]
 		if !ok {
-			d.rooms[i] = &Room{
-				// TODO
-				id0: request.h0.user.ID,
-				id1: request.h1.user.ID,
+			handler := make(map[uint]*fightingHandler)
+			handler[request.h0.user.ID] = nil
+			handler[request.h1.user.ID] = nil
+			room := &Room{
+				mode:         request.h0.mode,
+				isStart:      false,
+				handler:      handler,
+				activateTime: time.Now(),
+				close:        make(chan bool, 16),
+
+				connect: make(chan *fightingHandler, 16),
+				upload:  make(chan *uploadMessage, 16),
+				leave:   make(chan *fightingHandler, 16),
 			}
+			d.rooms[i] = room
 			request.master.room <- &acquireRoomResponce{
 				request: request,
 				roomID:  i,
 				err:     nil,
 			}
+			go room.Run()
 			return
 		}
 	}
@@ -71,9 +77,40 @@ func (d *FightingDaemon) acquire(request *acquireRoomRequest) {
 	}
 }
 
+// 连接房间
+func (d *FightingDaemon) dispatch(handler *fightingHandler) {
+	room, ok := d.rooms[handler.roomId]
+	if !ok {
+		bytes, _ := json.Marshal(map[string]any{
+			"type": "err",
+			"msg":  "no room",
+		})
+		handler.msg <- bytes
+		return
+	}
+	room.connect <- handler
+}
+
 // 清理无用房间
 func (d *FightingDaemon) clean() {
-
+	for id, room := range d.rooms {
+		if room.activateTime.Add(viper.GetDuration("socket.cleanRoomInterval")).Before(time.Now()) {
+			delete(d.rooms, id)
+			room.close <- true
+			continue
+		}
+		noConnect := true
+		for _, handler := range room.handler {
+			if handler != nil {
+				noConnect = false
+				break
+			}
+		}
+		if noConnect {
+			delete(d.rooms, id)
+			room.close <- true
+		}
+	}
 }
 
 // 主循环
@@ -84,135 +121,164 @@ func (d *FightingDaemon) Run() {
 		select {
 		case request := <-d.request:
 			d.acquire(request)
+		case handler := <-d.connect:
+			d.dispatch(handler)
 		case <-ticker.C:
 			d.clean()
 		}
 	}
 }
 
-type Room struct {
-	id0 uint
-	id1 uint
-}
-
-type GameDaemon struct {
-	handler0  *fightingHandler
-	upload0   chan []byte
-	download0 chan []byte
-	exit0     chan bool
-	isExit0   bool
-	handler1  *fightingHandler
-	upload1   chan []byte
-	download1 chan []byte
-	exit1     chan bool
-	isExit1   bool
-	isSilent  bool
-}
-
-type fightingHandler struct {
-	user     *models.User
-	ws       *websocket.Conn
-	ctrl     *GameDaemon
-	upload   chan []byte
-	download chan []byte
-	exit     chan bool
-}
-
-func (p *pairingHandler) migrate(ctrl *GameDaemon) *fightingHandler {
-	p.migrated = true
+// 用户接口
+func (d *FightingDaemon) Connect(ws *websocket.Conn, userId int, roomId int) {
 	handler := &fightingHandler{
-		user:     p.user,
-		ws:       p.ws,
-		ctrl:     ctrl,
-		upload:   make(chan []byte),
-		download: make(chan []byte),
-		exit:     make(chan bool),
+		ws:     ws,
+		userId: userId,
+		roomId: roomId,
+		room:   nil,
+		msg:    make(chan []byte, 16),
 	}
-	p.Close()
-	return handler
+	go handler.Write()
+	go handler.Read()
+	fightingDaemon.connect <- handler
 }
 
-func Fighting(handler0 *pairingHandler, handler1 *pairingHandler) {
-	ctrl := &GameDaemon{
-		isExit0: false,
-		isExit1: false,
-	}
-
-	newHandler0 := handler0.migrate(ctrl)
-	ctrl.handler0 = newHandler0
-	ctrl.upload0 = newHandler0.upload
-	ctrl.download0 = newHandler0.download
-	ctrl.exit0 = newHandler0.exit
-
-	newHandler1 := handler1.migrate(ctrl)
-	ctrl.handler1 = newHandler1
-	ctrl.upload1 = newHandler1.upload
-	ctrl.download1 = newHandler1.download
-	ctrl.exit1 = newHandler1.exit
-
-	go ctrl.Run()
-	go newHandler0.Read()
-	go newHandler0.Write()
-	go newHandler1.Read()
-	go newHandler1.Write()
-
-	go ctrl.SendStart()
+type uploadMessage struct {
+	from *fightingHandler
+	msg  *communicateData
 }
 
-func (con *GameDaemon) SendStart() {
-	startMsg, err := json.Marshal(map[string]any{
-		"type": "game_start",
-	})
-	if err != nil {
-		log.Printf("Fighting start message marshal error: %v\n", err)
-		con.Shutdown()
+type Room struct {
+	activateTime time.Time
+	mode         string
+	handler      map[uint]*fightingHandler
+	isStart      bool
+	close        chan bool
+
+	connect chan *fightingHandler
+	upload  chan *uploadMessage
+	leave   chan *fightingHandler
+}
+
+// 房间连接
+func (r *Room) attach(handler *fightingHandler) {
+	online, ok := r.handler[uint(handler.userId)]
+	if !ok {
+		bytes, _ := json.Marshal(map[string]any{
+			"type": "err",
+			"msg":  "not room member",
+		})
+		handler.msg <- bytes
 		return
 	}
-	con.download0 <- startMsg
-	con.download1 <- startMsg
+	if online != nil {
+		bytes, _ := json.Marshal(map[string]any{
+			"type": "err",
+			"msg":  "already online",
+		})
+		handler.msg <- bytes
+		return
+	}
+	handler.room = r
+	r.handler[uint(handler.userId)] = handler
 }
 
-func (con *GameDaemon) Shutdown() {
-	con.handler0.Close()
-	con.handler1.Close()
-	close(con.upload0)
-	close(con.download0)
-	close(con.upload1)
-	close(con.download1)
-}
-
-func (con *GameDaemon) Run() {
-	ticker := time.NewTicker(viper.GetDuration("socket.checkDeadInterval"))
-	defer ticker.Stop()
-	for {
-		select {
-		case data := <-con.upload0:
-			con.isSilent = false
-			if !con.isExit1 {
-				con.download1 <- data
-			}
-		case data := <-con.upload1:
-			con.isSilent = false
-			if !con.isExit0 {
-				con.download0 <- data
-			}
-		case <-con.exit0:
-			con.isSilent = false
-			con.isExit0 = true
-		case <-con.exit1:
-			con.isSilent = false
-			con.isExit1 = true
-		case <-ticker.C:
-			if (con.isExit0 && con.isExit1) || con.isSilent {
-				con.Shutdown()
-				return
-			}
-			con.isSilent = true
+// 房间退出
+func (r *Room) remove(handler *fightingHandler) {
+	oldhandler, ok := r.handler[uint(handler.userId)]
+	if !ok {
+		return
+	}
+	if oldhandler != handler {
+		return
+	}
+	r.handler[uint(handler.userId)] = nil
+	// 广而告之
+	bytes, _ := json.Marshal(map[string]any{
+		"type": "quit",
+		"msg":  "",
+	})
+	for _, handler := range r.handler {
+		if handler != nil {
+			handler.msg <- bytes
 		}
 	}
 }
 
+// 消息传递
+func (r *Room) distribute(msg *uploadMessage) {
+	bytes, _ := json.Marshal(map[string]any{
+		"type": "comm",
+		"msg":  msg.msg,
+	})
+	for _, handler := range r.handler {
+		if handler != nil || handler != msg.from {
+			handler.msg <- bytes
+		}
+	}
+}
+
+// 游戏启动
+func (r *Room) startGame() {
+	if !r.isStart {
+		allLogin := true
+		for _, login := range r.handler {
+			if login == nil {
+				allLogin = false
+				break
+			}
+		}
+		if allLogin {
+			// 广播
+			bytes, _ := json.Marshal(map[string]any{
+				"type": "start",
+				"msg":  "",
+			})
+			for _, handler := range r.handler {
+				handler.msg <- bytes
+			}
+			r.isStart = true
+		}
+	}
+}
+
+// 房间的主循环
+func (r *Room) Run() {
+	ticker := time.NewTicker(viper.GetDuration("socket.startGameInterval"))
+	defer ticker.Stop()
+	for {
+		select {
+		case handler := <-r.connect:
+			r.attach(handler)
+		case handler := <-r.leave:
+			r.remove(handler)
+		case msg := <-r.upload:
+			r.activateTime = time.Now()
+			r.distribute(msg)
+		case <-ticker.C:
+			r.startGame()
+		case <-r.close:
+			return
+		}
+	}
+}
+
+type communicateData struct {
+	UserId int `json:"user"`
+	Score  int `json:"score"`
+	Life   int `json:"life"`
+}
+
+type fightingHandler struct {
+	ws     *websocket.Conn
+	userId int
+	roomId int
+	room   *Room
+	msg    chan []byte
+}
+
 func (h *fightingHandler) Read() {
+	defer h.Close()
 	h.ws.SetReadLimit(viper.GetInt64("socket.maxMessageSize"))
 	h.ws.SetReadDeadline(time.Now().Add(viper.GetDuration("socket.pongWait")))
 	h.ws.SetPongHandler(func(string) error {
@@ -231,28 +297,30 @@ func (h *fightingHandler) Read() {
 			log.Printf("Fighting mode websocket messageType error: %d\n", messageType)
 			break
 		}
-		var targetID uint
-		if n, err := fmt.Sscan(string(message), &targetID); n != 1 || err != nil {
-			log.Printf("Fighting mode websocket message error: %v\n", err)
+		data := &communicateData{}
+		if err := json.Unmarshal(message, data); err != nil {
+			log.Printf("Json unmarshalling error: %v\n", err)
 			break
 		}
-		h.ctrl.upload0 <- []byte{} // todo
+		if h.room != nil {
+			h.room.upload <- &uploadMessage{
+				from: h,
+				msg:  data,
+			}
+		}
 	}
-	h.Close()
 }
 
 func (h *fightingHandler) Write() {
+	defer h.Close()
 	ticker := time.NewTicker(viper.GetDuration("socket.pingPeriod"))
-	defer func() {
-		ticker.Stop()
-		h.Close()
-	}()
+	defer ticker.Stop()
 	for {
 		select {
-		case message, ok := <-h.download:
+		case message, ok := <-h.msg:
 			h.ws.SetWriteDeadline(time.Now().Add(viper.GetDuration("socket.writeWait")))
 			if !ok {
-				// ctrl 关闭了通道
+				// daemon 关闭了通道
 				h.ws.WriteMessage(websocket.CloseMessage, []byte{})
 				return
 			}
@@ -269,14 +337,16 @@ func (h *fightingHandler) Write() {
 		case <-ticker.C:
 			h.ws.SetWriteDeadline(time.Now().Add(viper.GetDuration("socket.writeWait")))
 			if err := h.ws.WriteMessage(websocket.PingMessage, nil); err != nil {
+				log.Printf("Fighting mode websocket write error: %v\n", err)
 				return
 			}
 		}
 	}
-
 }
 
 func (h *fightingHandler) Close() {
 	h.ws.Close()
-	h.exit <- true
+	if h.room != nil {
+		h.room.leave <- h
+	}
 }

@@ -259,7 +259,6 @@ func (h *pairingHandler) Write() {
 			}
 		}
 	}
-
 }
 
 func (h *pairingHandler) Close() {

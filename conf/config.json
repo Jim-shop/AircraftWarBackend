@@ -25,6 +25,7 @@
         "onlinePushInterval": "2s",
         "checkDeadInterval": "10s",
         "cleanRoomInterval": "60s",
+        "startGameInterval": "1s",
         "maxRoomNum": 1024
     }
 }
