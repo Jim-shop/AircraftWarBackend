@@ -22,7 +22,7 @@
         "pongWait": "60s",
         "pingPeriod": "45s",
         "writeWait": "10s",
-        "onlinePushInterval": "2s",
+        "onlinePushInterval": "1s",
         "checkDeadInterval": "10s",
         "cleanRoomInterval": "60s",
         "startGameInterval": "1s",

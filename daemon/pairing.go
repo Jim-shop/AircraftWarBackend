@@ -62,9 +62,9 @@ func (d *PairingDaemon) remove(handler *pairingHandler) {
 func (d *PairingDaemon) boardcast() {
 	for handler := range d.handlers {
 		player := []any{}
-		for other, req := range d.handlers {
+		for other, _ := range d.handlers {
 			if handler.user.ID != other.user.ID && handler.mode == other.mode {
-				_, requesting := req[handler.user.ID]
+				_, requesting := d.handlers[handler][other.user.ID]
 				player = append(player, map[string]any{
 					"ID":         other.user.ID,
 					"name":       other.user.Name,
@@ -73,8 +73,8 @@ func (d *PairingDaemon) boardcast() {
 			}
 		}
 		bytes, err := json.Marshal(map[string]any{
-			"type":   "player_list",
-			"player": player,
+			"type": "player",
+			"msg":  player,
 		})
 		if err != nil {
 			log.Printf("Json Marshalling error: %v\n", err)
@@ -114,7 +114,7 @@ func (d *PairingDaemon) pair(pairing *pairRequest) bool {
 		return false
 	}
 	// 双方进行配对
-	d.handlers[target][pairing.sender.user.ID] = true
+	d.handlers[target][sender.user.ID] = true
 	// 判断配对情况
 	if _, ok := selectBy[pairing.TargetID]; ok {
 		fightingDaemon.request <- &acquireRoomRequest{
@@ -137,7 +137,7 @@ func (d *PairingDaemon) getRoom(responce *acquireRoomResponce) {
 	defer d.remove(h1)
 	bytes, err := json.Marshal(map[string]any{
 		"type": "room",
-		"room": responce.roomID,
+		"msg": responce.roomID,
 	})
 	if err != nil {
 		log.Printf("Json Marshalling error: %v\n", err)

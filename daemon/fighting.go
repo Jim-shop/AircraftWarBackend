@@ -212,7 +212,7 @@ func (r *Room) distribute(msg *uploadMessage) {
 		"msg":  msg.msg,
 	})
 	for _, handler := range r.handler {
-		if handler != nil || handler != msg.from {
+		if handler != nil && handler != msg.from {
 			handler.msg <- bytes
 		}
 	}
@@ -302,6 +302,7 @@ func (h *fightingHandler) Read() {
 			log.Printf("Json unmarshalling error: %v\n", err)
 			break
 		}
+		data.UserId = h.userId
 		if h.room != nil {
 			h.room.upload <- &uploadMessage{
 				from: h,
