@@ -16,7 +16,7 @@ type GetScoreboardRequest struct {
 
 type AddScoreboardRequest struct {
 	models.Token
-	Score int       `form:"score" json:"score" uri:"score" xml:"score" binding:"required"`
+	Score string       `form:"score" json:"score" uri:"score" xml:"score" binding:"required"`
 	Mode  string    `form:"mode" json:"mode" uri:"mode" xml:"mode" binding:"required"`
 	Time  time.Time `form:"time" json:"time" uri:"time" xml:"time" binding:"required"`
 }
@@ -69,7 +69,12 @@ func AddScoreboard(c *gin.Context) {
 		c.Status(http.StatusBadRequest)
 		return
 	}
-	if request.Score < 0 {
+	score, err := strconv.ParseInt(request.Score, 10, 32)
+	if err != nil {
+		c.Status(http.StatusBadRequest)
+		return
+	}
+	if score < 0 {
 		c.Status(http.StatusBadRequest)
 		return
 	}
@@ -89,14 +94,14 @@ func AddScoreboard(c *gin.Context) {
 		return
 	}
 	// 格式化
-	score := &models.Score{
+	scoreItem := &models.Score{
 		UserID: user_id,
-		Score:  request.Score,
+		Score:  int(score),
 		Mode:   request.Mode,
 		Time:   request.Time,
 	}
 	// 增加
-	if err := models.SaveScore(score); err != nil {
+	if err := models.SaveScore(scoreItem); err != nil {
 		log.Printf("Score saving error: %v\n", err)
 		c.Status(http.StatusBadRequest)
 		return

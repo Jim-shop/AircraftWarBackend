@@ -62,7 +62,7 @@ func (d *PairingDaemon) remove(handler *pairingHandler) {
 func (d *PairingDaemon) boardcast() {
 	for handler := range d.handlers {
 		player := []any{}
-		for other, _ := range d.handlers {
+		for other := range d.handlers {
 			if handler.user.ID != other.user.ID && handler.mode == other.mode {
 				_, requesting := d.handlers[handler][other.user.ID]
 				player = append(player, map[string]any{
